@@ -2,6 +2,10 @@ package laberinto.modelo;
 
 import java.util.*;
 
+/**
+ * Representa el tablero y guarda las conexiones entre sus celdas.
+ * Cada pasillo tiene un costo que se usa para comparar rutas.
+ */
 public class Laberinto {
     private final int filas;
     private final int columnas;
@@ -10,6 +14,11 @@ public class Laberinto {
     private Grafo grafo;
     private Modo modo;
 
+    /**
+     * Crea un tablero con celdas libres y paredes elegidas al azar.
+     * Deja al menos una entrada en la primera columna y una salida en la última.
+     * Después se llama a construirGrafo para preparar los pasillos.
+     */
     public Laberinto(int filas, int columnas, int porcentajeParedes, Random random) {
         if (filas < 1 || columnas < 2) {
             throw new IllegalArgumentException("se requieren al menos 1 fila y 2 columnas");
@@ -36,6 +45,10 @@ public class Laberinto {
         celdaLibre[random.nextInt(filas)][columna] = true;
     }
 
+    /**
+     * Conecta las celdas libres con pasillos para que se puedan buscar rutas.
+     * El modo elegido determina el sentido de los pasillos y los costos permitidos.
+     */
     public void construirGrafo(Modo modoGrafo) {
         this.modo = modoGrafo;
         boolean esDirigido = modoGrafo != Modo.NO_DIRIGIDO;
@@ -179,9 +192,8 @@ public class Laberinto {
     }
 
     /**
-     * convierte el grafo en texto mostrando para cada celda libre a qué celdas se puede ir desde ella y
-     * cuanto cuesta cada pasillo es la lista de adyacencia escrita de forma entendible,
-     * y es lo que esta en el PDF para mostrar el grafo que corresponde al laberinto
+     * Muestra qué celdas están conectadas y cuánto cuesta recorrer cada pasillo.
+     * Incluye las celdas libres que no tienen pasillos de salida.
      */
     public String describirGrafo() {
         StringBuilder texto = new StringBuilder("Lista de adyacencia (" + modo + "):\n");
@@ -197,5 +209,30 @@ public class Laberinto {
                     destinos.length() == 0 ? "(sin aristas)" : destinos));
         }
         return texto.toString();
+    }
+
+    /**
+     * Crea un laberinto fijo de 3 filas y 4 columnas, con dos entradas y dos salidas.
+     * Desde la entrada (0, 0), llegar a (0, 3) cuesta 5 y llegar a (2, 3) cuesta -2.
+     * La segunda opción es la de menor costo. Desde (2, 0) no se llega a ninguna salida.
+     * Las filas y columnas del ejemplo se cuentan desde cero.
+     */
+    public static Laberinto ejemploDePrueba() {
+        Laberinto ejemplo = new Laberinto(3, 4, 0, new Random(0));
+        ejemplo.celdaLibre[1][0] = false;
+        ejemplo.celdaLibre[1][3] = false;
+        ejemplo.celdaLibre[2][1] = false;
+        ejemplo.modo = Modo.DAG_NEGATIVO;
+
+        Grafo grafoEjemplo = new Grafo(ejemplo.filas * ejemplo.columnas, true);
+        grafoEjemplo.agregarAristas(ejemplo.id(0, 0), ejemplo.id(0, 1), 2);
+        grafoEjemplo.agregarAristas(ejemplo.id(0, 1), ejemplo.id(0, 2), 1);
+        grafoEjemplo.agregarAristas(ejemplo.id(0, 2), ejemplo.id(0, 3), 2);
+        grafoEjemplo.agregarAristas(ejemplo.id(0, 1), ejemplo.id(1, 1), 3);
+        grafoEjemplo.agregarAristas(ejemplo.id(1, 1), ejemplo.id(1, 2), -10);
+        grafoEjemplo.agregarAristas(ejemplo.id(1, 2), ejemplo.id(2, 2), 1);
+        grafoEjemplo.agregarAristas(ejemplo.id(2, 2), ejemplo.id(2, 3), 2);
+        ejemplo.grafo = grafoEjemplo;
+        return ejemplo;
     }
 }
